@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import express from "express";
 
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import type { ResolvedBrowserConfig } from "./config.js";
 import { registerBrowserRoutes } from "./routes/index.js";
 import type { BrowserRouteRegistrar } from "./routes/types.js";
@@ -29,6 +30,12 @@ export async function startBrowserBridgeServer(params: {
   const port = params.port ?? 0;
 
   const app = express();
+
+  app.use((_req, res, next) => {
+    applyStandardSecurityHeaders(res);
+    next();
+  });
+
   app.use(express.json({ limit: "1mb" }));
 
   const authToken = params.authToken?.trim();

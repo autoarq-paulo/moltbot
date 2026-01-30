@@ -9,6 +9,7 @@ const createRes = () => {
   const res = {
     status: vi.fn(),
     json: vi.fn(),
+    setHeader: vi.fn(),
     headersSent: false,
   } as any;
   res.status.mockReturnValue(res);
