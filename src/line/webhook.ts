@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { WebhookRequestBody } from "@line/bot-sdk";
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { logVerbose, danger } from "../globals.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { validateLineSignature } from "./signature.js";
@@ -33,6 +34,7 @@ export function createLineWebhookMiddleware(options: LineWebhookOptions) {
   const { channelSecret, onEvents, runtime } = options;
 
   return async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    applyStandardSecurityHeaders(res);
     try {
       const signature = req.headers["x-line-signature"];
 
