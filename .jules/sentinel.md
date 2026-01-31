@@ -18,3 +18,13 @@
 - Use the `applyStandardSecurityHeaders` utility for all HTTP responses.
 - When validating subpaths, append `path.sep` to the root directory before checking with `startsWith`.
 - Reject backslashes and null characters in user-provided relative paths.
+
+## 2026-02-12 - Standard Security Headers on Utility Servers
+
+**Vulnerability:** While the main Gateway server had standard security headers, several utility HTTP servers (Telegram Webhook, Chrome Extension Relay, and local OAuth callback) were missing them. This left them vulnerable to MIME-sniffing and clickjacking. The local OAuth callback is particularly sensitive as it handles authorization codes.
+
+**Learning:** Utility and temporary servers are often overlooked when applying security baseline policies. Every HTTP entry point, no matter how specialized or temporary, should adhere to the same security header standards.
+
+**Prevention:**
+- Use the `applyStandardSecurityHeaders` utility in *every* `http.createServer` callback.
+- Add security header checks to the test suites of all components that expose an HTTP interface.
