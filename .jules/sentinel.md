@@ -18,3 +18,13 @@
 - Use the `applyStandardSecurityHeaders` utility for all HTTP responses.
 - When validating subpaths, append `path.sep` to the root directory before checking with `startsWith`.
 - Reject backslashes and null characters in user-provided relative paths.
+
+## 2026-02-12 - Path Traversal in Memory Retrieval
+
+**Vulnerability:** The Memory Index Manager's `readFile` method was vulnerable to partial path traversal (sibling directory access). It checked if the resolved path started with the workspace directory string without ensuring the prefix ended in a directory separator. This would allow an agent to read files from sibling directories like `workspace-secret/` if the intended workspace was `workspace/`.
+
+**Learning:** Path containment checks using `startsWith` are dangerous unless the root path is guaranteed to end with a directory separator. Relative path validation should always include checks for null characters to prevent logic bypasses in path resolution.
+
+**Prevention:**
+- When using `startsWith` for directory containment, always append `path.sep` to the root directory first.
+- Explicitly check for and reject null characters (`\0`) in user-provided relative paths.

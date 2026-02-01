@@ -396,12 +396,18 @@ export class MemoryIndexManager {
     from?: number;
     lines?: number;
   }): Promise<{ text: string; path: string }> {
+    if (params.relPath.includes("\0")) {
+      throw new Error("invalid path");
+    }
     const relPath = normalizeRelPath(params.relPath);
     if (!relPath || !isMemoryPath(relPath)) {
       throw new Error("path required");
     }
     const absPath = path.resolve(this.workspaceDir, relPath);
-    if (!absPath.startsWith(this.workspaceDir)) {
+    const workspaceDirWithSep = this.workspaceDir.endsWith(path.sep)
+      ? this.workspaceDir
+      : this.workspaceDir + path.sep;
+    if (!absPath.startsWith(workspaceDirWithSep) && absPath !== this.workspaceDir) {
       throw new Error("path escapes workspace");
     }
     const content = await fs.readFile(absPath, "utf-8");
