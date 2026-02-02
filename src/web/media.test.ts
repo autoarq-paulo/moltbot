@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -11,13 +10,15 @@ import { loadWebMedia, optimizeImageToJpeg } from "./media.js";
 const tmpFiles: string[] = [];
 
 async function writeTempFile(buffer: Buffer, ext: string): Promise<string> {
+  const dir = path.join(process.cwd(), "test-tmp");
+  await fs.mkdir(dir, { recursive: true });
   const file = path.join(
-    os.tmpdir(),
+    dir,
     `moltbot-media-${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`,
   );
   tmpFiles.push(file);
   await fs.writeFile(file, buffer);
-  return file;
+  return path.relative(process.cwd(), file);
 }
 
 function buildDeterministicBytes(length: number): Buffer {
@@ -33,6 +34,9 @@ function buildDeterministicBytes(length: number): Buffer {
 afterEach(async () => {
   await Promise.all(tmpFiles.map((file) => fs.rm(file, { force: true })));
   tmpFiles.length = 0;
+  await fs
+    .rm(path.join(process.cwd(), "test-tmp"), { recursive: true, force: true })
+    .catch(() => {});
 });
 
 describe("web media loading", () => {

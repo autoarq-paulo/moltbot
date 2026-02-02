@@ -1,10 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { logVerbose, shouldLogVerbose } from "../globals.js";
 import { type MediaKind, maxBytesForKind, mediaKindFromMime } from "../media/constants.js";
-import { resolveUserPath } from "../utils.js";
 import { fetchRemoteMedia } from "../media/fetch.js";
 import {
   convertHeicToJpeg,
@@ -112,13 +110,8 @@ async function loadWebMediaInternal(
   options: WebMediaOptions = {},
 ): Promise<WebMediaResult> {
   const { maxBytes, optimizeImages = true } = options;
-  // Use fileURLToPath for proper handling of file:// URLs (handles file://localhost/path, etc.)
   if (mediaUrl.startsWith("file://")) {
-    try {
-      mediaUrl = fileURLToPath(mediaUrl);
-    } catch {
-      throw new Error(`Invalid file:// URL: ${mediaUrl}`);
-    }
+    throw new Error("Security error: file:// protocol is not allowed");
   }
 
   const optimizeAndClampImage = async (
@@ -195,9 +188,9 @@ async function loadWebMediaInternal(
     return await clampAndFinalize({ buffer, contentType, kind, fileName });
   }
 
-  // Expand tilde paths to absolute paths (e.g., ~/Downloads/photo.jpg)
-  if (mediaUrl.startsWith("~")) {
-    mediaUrl = resolveUserPath(mediaUrl);
+  // Local path validation: block absolute paths, traversal, and tilde expansion for security
+  if (path.isAbsolute(mediaUrl) || mediaUrl.includes("..") || mediaUrl.startsWith("~")) {
+    throw new Error("Security error: Only relative local paths are allowed");
   }
 
   // Local path
