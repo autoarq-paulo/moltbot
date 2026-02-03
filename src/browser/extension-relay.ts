@@ -4,6 +4,7 @@ import type { Duplex } from "node:stream";
 
 import WebSocket, { WebSocketServer } from "ws";
 
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { rawDataToString } from "../infra/ws.js";
 
 type CdpCommand = {
@@ -288,6 +289,7 @@ export async function ensureChromeExtensionRelayServer(opts: {
   };
 
   const server = createServer((req, res) => {
+    applyStandardSecurityHeaders(res);
     const url = new URL(req.url ?? "/", info.baseUrl);
     const path = url.pathname;
 

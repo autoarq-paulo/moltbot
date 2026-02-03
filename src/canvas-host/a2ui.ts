@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { LEGACY_CANVAS_HANDLER_NAME } from "../compat/legacy-names.js";
+import { isSafeRelativePath } from "../infra/fs-safe.js";
 import { detectMime } from "../media/mime.js";
 
 export const A2UI_PATH = "/__moltbot__/a2ui";
@@ -63,7 +64,7 @@ function normalizeUrlPath(rawPath: string): string {
 async function resolveA2uiFilePath(rootReal: string, urlPath: string) {
   const normalized = normalizeUrlPath(urlPath);
   const rel = normalized.replace(/^\/+/, "");
-  if (rel.split("/").some((p) => p === "..")) return null;
+  if (!isSafeRelativePath(rel)) return null;
 
   let candidate = path.join(rootReal, rel);
   if (normalized.endsWith("/")) {

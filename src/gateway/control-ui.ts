@@ -3,6 +3,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isSafeRelativePath } from "../infra/fs-safe.js";
+import { applyStandardSecurityHeaders } from "./http-utils.js";
 import type { MoltbotConfig } from "../config/config.js";
 import { DEFAULT_ASSISTANT_IDENTITY, resolveAssistantIdentity } from "./assistant-identity.js";
 import {
@@ -87,6 +89,7 @@ type ControlUiAvatarMeta = {
 };
 
 function sendJson(res: ServerResponse, status: number, body: unknown) {
+  applyStandardSecurityHeaders(res);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache");
@@ -102,6 +105,7 @@ export function handleControlUiAvatarRequest(
   res: ServerResponse,
   opts: { basePath?: string; resolveAvatar: (agentId: string) => ControlUiAvatarResolution },
 ): boolean {
+  applyStandardSecurityHeaders(res);
   const urlRaw = req.url;
   if (!urlRaw) return false;
   if (req.method !== "GET" && req.method !== "HEAD") return false;
@@ -152,12 +156,14 @@ export function handleControlUiAvatarRequest(
 }
 
 function respondNotFound(res: ServerResponse) {
+  applyStandardSecurityHeaders(res);
   res.statusCode = 404;
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.end("Not Found");
 }
 
 function serveFile(res: ServerResponse, filePath: string) {
+  applyStandardSecurityHeaders(res);
   const ext = path.extname(filePath).toLowerCase();
   res.setHeader("Content-Type", contentTypeForExt(ext));
   // Static UI should never be cached aggressively while iterating; allow the
@@ -201,6 +207,7 @@ interface ServeIndexHtmlOpts {
 }
 
 function serveIndexHtml(res: ServerResponse, indexPath: string, opts: ServeIndexHtmlOpts) {
+  applyStandardSecurityHeaders(res);
   const { basePath, config, agentId } = opts;
   const identity = config
     ? resolveAssistantIdentity({ cfg: config, agentId })
@@ -227,22 +234,12 @@ function serveIndexHtml(res: ServerResponse, indexPath: string, opts: ServeIndex
   );
 }
 
-function isSafeRelativePath(relPath: string) {
-  if (!relPath) return false;
-  if (relPath.includes("\0")) return false;
-  // URLs should use forward slashes; literal backslashes can be used to bypass
-  // directory traversal checks on Windows.
-  if (relPath.includes("\\")) return false;
-  const normalized = path.posix.normalize(relPath);
-  if (normalized.startsWith("../") || normalized === "..") return false;
-  return true;
-}
-
 export function handleControlUiHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
   opts?: ControlUiRequestOptions,
 ): boolean {
+  applyStandardSecurityHeaders(res);
   const urlRaw = req.url;
   if (!urlRaw) return false;
   if (req.method !== "GET" && req.method !== "HEAD") {

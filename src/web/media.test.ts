@@ -51,7 +51,7 @@ describe("web media loading", () => {
     const file = await writeTempFile(buffer, ".jpg");
 
     const cap = Math.floor(buffer.length * 0.8);
-    const result = await loadWebMedia(file, cap);
+    const result = await loadWebMedia(file, cap, { allowAbsolutePaths: true });
 
     expect(result.kind).toBe("image");
     expect(result.buffer.length).toBeLessThanOrEqual(cap);
@@ -66,7 +66,7 @@ describe("web media loading", () => {
       .toBuffer();
     const wrongExt = await writeTempFile(pngBuffer, ".bin");
 
-    const result = await loadWebMedia(wrongExt, 1024 * 1024);
+    const result = await loadWebMedia(wrongExt, 1024 * 1024, { allowAbsolutePaths: true });
 
     expect(result.kind).toBe("image");
     expect(result.contentType).toBe("image/jpeg");
@@ -169,7 +169,7 @@ describe("web media loading", () => {
 
     const file = await writeTempFile(gifBuffer, ".gif");
 
-    const result = await loadWebMedia(file, 1024 * 1024);
+    const result = await loadWebMedia(file, 1024 * 1024, { allowAbsolutePaths: true });
 
     expect(result.kind).toBe("image");
     expect(result.contentType).toBe("image/gif");
@@ -215,7 +215,7 @@ describe("web media loading", () => {
 
     const file = await writeTempFile(buffer, ".png");
 
-    const result = await loadWebMedia(file, 1024 * 1024);
+    const result = await loadWebMedia(file, 1024 * 1024, { allowAbsolutePaths: true });
 
     expect(result.kind).toBe("image");
     expect(result.contentType).toBe("image/png");
@@ -255,7 +255,7 @@ describe("web media loading", () => {
 
     const file = await writeTempFile(pngBuffer, ".png");
 
-    const result = await loadWebMedia(file, cap);
+    const result = await loadWebMedia(file, cap, { allowAbsolutePaths: true });
 
     expect(result.kind).toBe("image");
     expect(result.contentType).toBe("image/jpeg");

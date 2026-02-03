@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { logVerbose, shouldLogVerbose } from "../globals.js";
+import { isSafeRelativePath } from "../infra/fs-safe.js";
 import { type MediaKind, maxBytesForKind, mediaKindFromMime } from "../media/constants.js";
 import { resolveUserPath } from "../utils.js";
 import { fetchRemoteMedia } from "../media/fetch.js";
@@ -24,6 +25,7 @@ export type WebMediaResult = {
 type WebMediaOptions = {
   maxBytes?: number;
   optimizeImages?: boolean;
+  allowAbsolutePaths?: boolean;
 };
 
 const HEIC_MIME_RE = /^image\/hei[cf]$/i;
@@ -111,7 +113,7 @@ async function loadWebMediaInternal(
   mediaUrl: string,
   options: WebMediaOptions = {},
 ): Promise<WebMediaResult> {
-  const { maxBytes, optimizeImages = true } = options;
+  const { maxBytes, optimizeImages = true, allowAbsolutePaths = false } = options;
   // Use fileURLToPath for proper handling of file:// URLs (handles file://localhost/path, etc.)
   if (mediaUrl.startsWith("file://")) {
     try {
@@ -200,6 +202,16 @@ async function loadWebMediaInternal(
     mediaUrl = resolveUserPath(mediaUrl);
   }
 
+  // Security: reject absolute paths unless explicitly allowed, and always
+  // enforce that relative paths are safe (no backslashes, no traversal).
+  if (path.isAbsolute(mediaUrl)) {
+    if (!allowAbsolutePaths) {
+      throw new Error(`Absolute paths are not allowed in loadWebMedia: ${mediaUrl}`);
+    }
+  } else if (!isSafeRelativePath(mediaUrl)) {
+    throw new Error(`Unsafe relative path in loadWebMedia: ${mediaUrl}`);
+  }
+
   // Local path
   const data = await fs.readFile(mediaUrl);
   const mime = await detectMime({ buffer: data, filePath: mediaUrl });
@@ -217,20 +229,27 @@ async function loadWebMediaInternal(
   });
 }
 
-export async function loadWebMedia(mediaUrl: string, maxBytes?: number): Promise<WebMediaResult> {
+export async function loadWebMedia(
+  mediaUrl: string,
+  maxBytes?: number,
+  options: { allowAbsolutePaths?: boolean } = {},
+): Promise<WebMediaResult> {
   return await loadWebMediaInternal(mediaUrl, {
     maxBytes,
     optimizeImages: true,
+    allowAbsolutePaths: options.allowAbsolutePaths,
   });
 }
 
 export async function loadWebMediaRaw(
   mediaUrl: string,
   maxBytes?: number,
+  options: { allowAbsolutePaths?: boolean } = {},
 ): Promise<WebMediaResult> {
   return await loadWebMediaInternal(mediaUrl, {
     maxBytes,
     optimizeImages: false,
+    allowAbsolutePaths: options.allowAbsolutePaths,
   });
 }
 
