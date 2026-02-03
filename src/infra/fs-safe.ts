@@ -35,6 +35,22 @@ const isNotFoundError = (err: unknown) =>
 const isSymlinkOpenError = (err: unknown) =>
   isNodeError(err) && (err.code === "ELOOP" || err.code === "EINVAL" || err.code === "ENOTSUP");
 
+/**
+ * Checks if a relative path is safe to use (no nulls, no backslashes, no traversal).
+ * This is primarily for paths originating from URLs.
+ */
+export function isSafeRelativePath(relPath: string) {
+  if (relPath === "") return true;
+  if (!relPath) return false;
+  if (relPath.includes("\0")) return false;
+  // URLs should use forward slashes; literal backslashes can be used to bypass
+  // directory traversal checks on Windows.
+  if (relPath.includes("\\")) return false;
+  const normalized = path.posix.normalize(relPath);
+  if (normalized.startsWith("../") || normalized === "..") return false;
+  return true;
+}
+
 export async function openFileWithinRoot(params: {
   rootDir: string;
   relativePath: string;

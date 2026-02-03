@@ -13,6 +13,7 @@ import {
   startDiagnosticHeartbeat,
   stopDiagnosticHeartbeat,
 } from "../logging/diagnostic.js";
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { resolveTelegramAllowedUpdates } from "./allowed-updates.js";
 import { createTelegramBot } from "./bot.js";
 import { withTelegramApiErrorLogging } from "./api-logging.js";
@@ -53,6 +54,7 @@ export async function startTelegramWebhook(opts: {
   }
 
   const server = createServer((req, res) => {
+    applyStandardSecurityHeaders(res);
     if (req.url === healthPath) {
       res.writeHead(200);
       res.end("ok");

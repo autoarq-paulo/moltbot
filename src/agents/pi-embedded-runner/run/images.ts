@@ -218,8 +218,13 @@ export async function loadImageFromRef(
       }
     }
 
-    // loadWebMedia handles local file paths (including file:// URLs)
-    const media = await loadWebMedia(targetPath, options?.maxBytes);
+    // loadWebMedia handles local file paths (including file:// URLs).
+    // Absolute paths are allowed here because they have either been
+    // validated against the sandbox or were provided in a non-sandboxed
+    // context (e.g. by the owner).
+    const media = await loadWebMedia(targetPath, options?.maxBytes, {
+      allowAbsolutePaths: true,
+    });
 
     if (media.kind !== "image") {
       log.debug(`Native image: not an image file: ${targetPath} (got ${media.kind})`);

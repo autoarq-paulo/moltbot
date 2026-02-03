@@ -10,6 +10,7 @@ import {
   generateChutesPkce,
   parseOAuthCallbackInput,
 } from "../agents/chutes-oauth.js";
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 
 type OAuthPrompt = {
   message: string;
@@ -52,6 +53,7 @@ async function waitForLocalCallback(params: {
   return await new Promise<{ code: string; state: string }>((resolve, reject) => {
     let timeout: NodeJS.Timeout | null = null;
     const server = createServer((req, res) => {
+      applyStandardSecurityHeaders(res);
       try {
         const requestUrl = new URL(req.url ?? "/", redirectUrl.origin);
         if (requestUrl.pathname !== expectedPath) {

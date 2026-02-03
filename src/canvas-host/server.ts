@@ -8,7 +8,7 @@ import type { Duplex } from "node:stream";
 import chokidar from "chokidar";
 import { type WebSocket, WebSocketServer } from "ws";
 import { isTruthyEnvValue } from "../infra/env.js";
-import { SafeOpenError, openFileWithinRoot } from "../infra/fs-safe.js";
+import { SafeOpenError, openFileWithinRoot, isSafeRelativePath } from "../infra/fs-safe.js";
 import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { detectMime } from "../media/mime.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -170,7 +170,7 @@ function normalizeUrlPath(rawPath: string): string {
 async function resolveFilePath(rootReal: string, urlPath: string) {
   const normalized = normalizeUrlPath(urlPath);
   const rel = normalized.replace(/^\/+/, "");
-  if (rel.split("/").some((p) => p === "..")) return null;
+  if (!isSafeRelativePath(rel)) return null;
 
   const tryOpen = async (relative: string) => {
     try {
