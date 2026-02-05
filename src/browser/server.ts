@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import express from "express";
 
 import { loadConfig } from "../config/config.js";
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveBrowserConfig, resolveProfile } from "./config.js";
 import { ensureChromeExtensionRelayServer } from "./extension-relay.js";
@@ -24,10 +25,7 @@ export async function startBrowserControlServerFromConfig(): Promise<BrowserServ
 
   // Set standard security headers.
   app.use((_req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "SAMEORIGIN");
-    res.setHeader("X-XSS-Protection", "0");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    applyStandardSecurityHeaders(res as any);
     next();
   });
 
