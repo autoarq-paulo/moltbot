@@ -18,3 +18,13 @@
 - Use the `applyStandardSecurityHeaders` utility for all HTTP responses.
 - When validating subpaths, append `path.sep` to the root directory before checking with `startsWith`.
 - Reject backslashes and null characters in user-provided relative paths.
+
+## 2026-02-12 - Universal Standard Security Headers
+
+**Vulnerability:** Several standalone or temporary HTTP servers (Extension Relay, Telegram Webhook, OAuth callback, Browser Bridge) were missing standard security headers, while others (Media Server, Browser Control) had them manually set. This inconsistency weakened the application's defense-in-depth posture.
+
+**Learning:** Standalone servers and temporary callback listeners are often overlooked during security audits but are equally critical entry points. Using a centralized utility for security headers ensures a consistent security baseline across the entire application, regardless of whether a server is long-running or short-lived.
+
+**Prevention:**
+- Always apply the `applyStandardSecurityHeaders` utility to every new HTTP server, even those used for temporary tasks like OAuth callbacks.
+- For Express applications, use a top-level middleware to apply these headers to all routes.
