@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 
 import type { OAuthCredentials } from "@mariozechner/pi-ai";
 
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
+
 import type { ChutesOAuthAppConfig } from "../agents/chutes-oauth.js";
 import {
   CHUTES_AUTHORIZE_ENDPOINT,
@@ -52,6 +54,7 @@ async function waitForLocalCallback(params: {
   return await new Promise<{ code: string; state: string }>((resolve, reject) => {
     let timeout: NodeJS.Timeout | null = null;
     const server = createServer((req, res) => {
+      applyStandardSecurityHeaders(res);
       try {
         const requestUrl = new URL(req.url ?? "/", redirectUrl.origin);
         if (requestUrl.pathname !== expectedPath) {

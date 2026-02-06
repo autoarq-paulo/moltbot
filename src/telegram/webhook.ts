@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 
 import { webhookCallback } from "grammy";
 import type { MoltbotConfig } from "../config/config.js";
+import { applyStandardSecurityHeaders } from "../gateway/http-utils.js";
 import { isDiagnosticsEnabled } from "../infra/diagnostic-events.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -53,6 +54,7 @@ export async function startTelegramWebhook(opts: {
   }
 
   const server = createServer((req, res) => {
+    applyStandardSecurityHeaders(res);
     if (req.url === healthPath) {
       res.writeHead(200);
       res.end("ok");
