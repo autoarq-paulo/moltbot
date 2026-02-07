@@ -18,3 +18,13 @@
 - Use the `applyStandardSecurityHeaders` utility for all HTTP responses.
 - When validating subpaths, append `path.sep` to the root directory before checking with `startsWith`.
 - Reject backslashes and null characters in user-provided relative paths.
+
+## 2026-02-07 - Uniform Security Headers Across All Server Entry Points
+
+**Vulnerability:** Multiple HTTP servers (Bridge Server, Extension Relay, Telegram Webhook, OAuth Callback) were missing standard security headers, while others (Media Server, Browser Control) duplicated the header logic manually. This inconsistency reduced the overall security posture and made maintenance harder.
+
+**Learning:** Internal and ephemeral servers (like OAuth callbacks) are often overlooked during security hardening but still require standard protections to prevent common web-based attacks. Centralizing security logic in a utility function ensures consistency and reduces the risk of human error when adding new entry points.
+
+**Prevention:**
+- Use the `applyStandardSecurityHeaders` utility for ALL HTTP servers, including those using Node's native `http.createServer`.
+- In Express apps, apply the utility as an early middleware to ensure all responses (including errors) are covered.
