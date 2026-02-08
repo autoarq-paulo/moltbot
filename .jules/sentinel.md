@@ -18,3 +18,13 @@
 - Use the `applyStandardSecurityHeaders` utility for all HTTP responses.
 - When validating subpaths, append `path.sep` to the root directory before checking with `startsWith`.
 - Reject backslashes and null characters in user-provided relative paths.
+
+## 2026-02-12 - Inconsistent SSRF Protection in Media Utilities
+
+**Vulnerability:** While some media utilities (like `store.ts`) implemented SSRF protection via DNS pinning, others (like `fetchRemoteMedia` in `fetch.ts`) used the global `fetch` without any hostname validation or pinned dispatchers. This allowed an attacker (or a compromised agent) to fetch internal resources via `fetchRemoteMedia`.
+
+**Learning:** Internal utilities often grow independently, leading to inconsistent security postures. A "secure-by-default" wrapper around network requests is essential. When using `undici`/`fetch`, the dispatcher must remain open until the body is fully consumed.
+
+**Prevention:**
+- Always use `resolvePinnedHostname` and `createPinnedDispatcher` for any utility that fetches remote content.
+- Wrap `fetch` calls and body consumption in a `try...finally` block to ensure the secure dispatcher is closed.
